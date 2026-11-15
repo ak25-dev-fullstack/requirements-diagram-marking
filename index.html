@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Requirements Diagram Marking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE work: a marker's feedback report, read by a student checking their own diagrams
+   IDEA the marked script: each student diagram is the paper, with the marker's numbered pins on it and the mark in a box
+   PICTURE the diagram itself with issue and strength pins; on the overview, stacked mark bars against the grade bands
+   COLOUR white ground, ink #101418, one yellow slab behind each mark, red pins for issues, blue for strengths, slate
+   TYPE Manrope 800 for titles and marks, Manrope 400/600 for text
+   LAYOUT nav bar, title left with the mark slab right; diagram 7/12 with sticky notes 5/12; stacks below 900px */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#101418);--ink:light-dark(#101418,#e8ecef);--slate:light-dark(#56616c,#9ba7b2);--line:light-dark(#dde2e6,#2a3138);--panel:light-dark(#f4f6f7,#171c21);--yel:#ffd84a;--bad:light-dark(#c4231b,#ff6f63);--good:light-dark(#1d5bbd,#7ea9ff);--mid:light-dark(#56616c,#9ba7b2)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:clip}
+a{color:inherit}
+img{max-width:100%;display:block}
+.wrap{max-width:1240px;margin:0 auto;padding:0 max(4vw,16px)}
+.top{border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:20}
+.top .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding-block:10px}
+.brand{font-weight:800;font-size:16px;text-decoration:none;margin-right:auto}
+.nav{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
+.grp{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.grp span{font-size:14px;color:var(--slate);margin-right:4px}
+.nav a{text-decoration:none;font-size:14px;font-weight:600;padding:8px 10px;border-radius:6px;min-height:36px;display:inline-flex;align-items:center}
+.nav a:hover{background:var(--panel)}
+.nav a[aria-current=page]{background:var(--ink);color:var(--bg)}
+.nav a:focus-visible,button:focus-visible,label:focus-within{outline:3px solid var(--good);outline-offset:2px}
+main{padding-block:clamp(24px,4vw,48px) 64px}
+.head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px 40px;align-items:start;margin-bottom:28px}
+h1{font-size:clamp(30px,4.2vw,46px);line-height:1.06;letter-spacing:-.02em;font-weight:800;margin:0 0 14px;text-wrap:balance;max-width:20ch}
+h2{font-size:24px;line-height:1.2;letter-spacing:-.01em;font-weight:800;margin:44px 0 14px}
+h3{font-size:18px;font-weight:700;margin:0 0 6px}
+.lede{font-size:17px;max-width:68ch;margin:0}
+.sub{color:var(--slate);font-size:15px;margin:10px 0 0;max-width:68ch}
+.slab{background:var(--yel);color:#101418;padding:18px 22px;border-radius:4px;min-width:190px}
+.slab b{display:block;font-size:clamp(44px,6vw,64px);line-height:1;font-weight:800;letter-spacing:-.03em;white-space:nowrap}
+.slab small{display:block;font-size:14px;font-weight:600;margin-top:8px}
+.work{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:28px;align-items:start}
+.figbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:14px;color:var(--slate)}
+.figbar label{display:inline-flex;gap:8px;align-items:center;cursor:pointer;min-height:36px}
+.figbar input{width:18px;height:18px;accent-color:var(--ink)}
+button{font:inherit;font-size:14px;font-weight:600;border:1px solid var(--ink);background:var(--bg);color:var(--ink);border-radius:6px;padding:8px 14px;min-height:40px;cursor:pointer}
+button:hover{background:var(--ink);color:var(--bg)}
+.paper{position:relative;background:#fff;border:1px solid var(--line);border-radius:4px;box-shadow:0 1px 0 var(--line)}
+.paper img{width:100%;height:auto;border-radius:4px}
+.pin{position:absolute;transform:translate(-50%,-50%);width:26px;height:26px;display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.35);text-decoration:none;cursor:pointer;padding:0;min-height:0}
+.pin.i{background:#c4231b;border-radius:50%}
+.pin.s{background:#1d5bbd;border-radius:5px}
+.pin.m{background:#56616c;border-radius:50%}
+.pin.on{outline:3px solid var(--yel);outline-offset:1px}
+.nopins .pin{display:none}
+.notes{position:sticky;top:76px;max-height:calc(100vh - 96px);overflow:auto;padding-right:4px}
+.note{display:grid;grid-template-columns:30px minmax(0,1fr);gap:12px;padding:12px 10px;border-top:1px solid var(--line);border-radius:4px}
+.note:first-child{border-top:0}
+.note.on{background:var(--panel)}
+.note .pin{position:static;transform:none;box-shadow:none}
+.note p{margin:2px 0 0;font-size:15px}
+.kind{font-size:13px;font-weight:700}
+.kind.i{color:var(--bad)}.kind.s{color:var(--good)}.kind.m{color:var(--mid)}
+.callout{background:var(--panel);border-left:4px solid var(--ink);padding:12px 16px;margin:0 0 22px;font-size:15px;max-width:80ch}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;vertical-align:top;padding:12px 10px;border-bottom:1px solid var(--line)}
+th{font-size:14px;color:var(--slate);font-weight:600}
+td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.meter{display:flex;gap:3px;margin-bottom:5px}
+.meter i{width:18px;height:8px;border-radius:2px;background:var(--line)}
+.meter i.f{background:var(--ink)}
+.rate{font-size:13px;font-weight:700;white-space:nowrap}
+.lift{padding-left:22px;max-width:80ch}
+.lift li{margin-bottom:8px}
+.pager{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:48px;border-top:1px solid var(--line);padding-top:20px}
+.pager a{display:block;text-decoration:none;padding:12px 14px;border:1px solid var(--line);border-radius:6px}
+.pager a:hover{border-color:var(--ink)}
+.pager small{display:block;color:var(--slate);font-size:13px}
+.pager .nx{text-align:right;grid-column:2}
+.bars{margin:8px 0 6px}
+.brow{display:grid;grid-template-columns:120px minmax(0,1fr) 118px;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.brow a{font-weight:700;text-decoration:none}
+.brow a:hover{text-decoration:underline}
+.track{position:relative;height:30px;background:var(--panel);border-radius:3px}
+.seg{position:absolute;top:0;bottom:0}
+.seg.h{background:var(--ink);border-radius:3px 0 0 3px}
+.seg.l{background:var(--slate);opacity:.55}
+.tick{position:absolute;top:-4px;bottom:-4px;width:0;border-left:1px dashed var(--slate)}
+.bval{font-weight:800;font-size:17px;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.bval small{display:block;font-weight:600;font-size:13px;color:var(--slate)}
+.bandlab{display:grid;grid-template-columns:120px minmax(0,1fr) 118px;gap:14px;font-size:13px;color:var(--slate)}
+.bandlab div{position:relative;height:20px}
+.bandlab span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.key{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:14px;color:var(--slate);margin-top:10px}
+.key i{display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.cov td.c{text-align:center;font-size:18px;width:76px}
+.cov th.c{text-align:center}
+.dot{display:inline-block;width:16px;height:16px;border-radius:50%;border:2px solid var(--ink);vertical-align:middle}
+.dot.d2{background:var(--ink)}
+.dot.d1{background:linear-gradient(90deg,var(--ink) 50%,transparent 50%)}
+.dot.d0{border-color:var(--slate);opacity:.45}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px}
+.pt{padding:14px 0;border-top:1px solid var(--line)}
+.pt p{margin:0;font-size:15px}
+.pt .ev{color:var(--slate);font-size:14px;margin-top:6px}
+.schem{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;margin-top:6px}
+.schem figure{margin:0}
+.schem .scroll svg{min-width:560px;width:100%;height:auto;display:block}
+.schem figcaption{font-size:15px;margin-top:10px}
+svg .bx{fill:var(--bg);stroke:var(--ink);stroke-width:1.5}
+svg .bx.hl{fill:#fff3bf;stroke:var(--ink)}
+svg .bk{fill:var(--panel);stroke:var(--ink);stroke-width:1.5}
+svg .ln{stroke:var(--ink);stroke-width:1.5;fill:none}
+svg .dl{stroke:var(--ink);stroke-width:1.5;fill:none;stroke-dasharray:6 4}
+svg text{fill:var(--ink);font-family:Manrope,system-ui,sans-serif;font-size:15px}
+svg text.st{font-size:13px;fill:var(--slate)}
+svg text.nm{font-weight:700;font-size:14px}
+svg text.hl{fill:#101418}
+svg text.lb{font-size:13px;fill:var(--slate);paint-order:stroke;stroke:var(--bg);stroke-width:4px}
+.ovl{position:fixed;inset:0;background:rgba(16,20,24,.86);z-index:50;display:none;flex-direction:column}
+.ovl.open{display:flex}
+.ovl .bar{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;color:#fff;font-weight:700;gap:12px}
+.ovl .bar button{background:#fff;color:#101418;border-color:#fff}
+.ovl .area{flex:1;overflow:auto;padding:0 16px 24px}
+.ovl .paper{margin:0 auto}
+.small{font-size:14px;color:var(--slate)}
+@media(max-width:900px){.work{grid-template-columns:minmax(0,1fr)}.notes{position:static;max-height:none;overflow:visible}.cols{grid-template-columns:minmax(0,1fr)}.schem{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:640px){.head{grid-template-columns:minmax(0,1fr)}.slab{min-width:0}.brow,.bandlab{grid-template-columns:72px minmax(0,1fr) 84px;gap:10px}.brow a{font-size:14px}.bval{font-size:15px}table{font-size:14px}th,td{padding:8px 6px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:block;border:0;padding:4px 0}.stack td::before{content:attr(data-l);display:block;font-size:13px;color:var(--slate);font-weight:600}.pager{grid-template-columns:minmax(0,1fr)}.pager .nx{grid-column:1}.cov td.c{width:44px}.bandlab .mid{display:none}.slab{padding:14px 18px}}
+@media(prefers-reduced-motion:no-preference){.note{transition:background .2s}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+<a class="brand" href="#overview">Requirements diagram marking</a>
+<nav class="nav" id="nav" aria-label="Pages"></nav>
+</div></header>
+<main><div class="wrap" id="view"></div></main>
+<div class="ovl" id="ovl" role="dialog" aria-modal="true" aria-label="Enlarged diagram">
+<div class="bar"><span id="ovlT"></span><button type="button" id="ovlX">Close</button></div>
+<div class="area" id="ovlA"></div>
+</div>
+<script>
+{
+const IMG={
+"high-5":{f:"img/s5-high.png",w:1550,h:1340,p:[[16.44,2.98],[33.25,51.05],[49.66,54.94],[83.77,37.99],[71.68,25.3],[30.85,22.99],[30.85,85.5]]},
+"low-5":{f:"img/s5-low.png",w:1520,h:1730,p:[[16.59,2.32],[7.61,30.65],[14.14,28.0],[14.39,43.92],[22.96,53.68],[45.98,83.24],[24.76,84.81],[85.01,68.17]]},
+"high-2":{f:"img/s2-d1.png",w:984,h:676,p:[[34.76,14.5],[48.37,18.49],[16.97,41.12],[16.97,58.43],[76.93,72.93]]},
+"low-2":{f:"img/s2-d2.png",w:986,h:677,p:[[48.48,6.79],[51.01,40.77],[85.8,38.55],[49.29,73.26],[5.38,47.27]]},
+"high-21":{f:"img/s21-high.png",w:1208,h:1488,p:[[49.17,4.44],[14.65,17.2],[14.65,26.28],[85.02,10.82],[49.59,38.71],[15.89,78.02],[81.29,77.69]]},
+"low-21":{f:"img/s21-low.png",w:1275,h:1540,p:[[46.27,6.69],[16.24,27.79],[43.14,18.7],[8.24,55.06],[46.27,73.25],[57.65,46.95],[16.08,35.91]]},
+"high-31":{f:"img/s31-high.png",w:1277,h:620,p:[[50.51,6.77],[31.32,23.55],[13.7,28.06],[51.45,69.19],[42.29,34.68]]},
+"low-31":{f:"img/s31-low.png",w:1191,h:1157,p:[[8.82,1.3],[44.92,16.85],[30.9,14.52],[22.25,59.64],[49.79,50.56],[79.01,48.4],[71.37,81.68]]}
+};
+const CRIT_H=["Completeness as regards the scenario","Appropriate decomposition","Appropriate level of abstraction","Separation of problem and implementation","Correct SysML notation","Brief fit: principal needs of the case study"];
+const CRIT_L=["Completeness as regards the scenario","Appropriate decomposition","Appropriate level of abstraction","Separation of problem and implementation","Correct SysML notation","Brief fit: 4–6 regulation-derived requirements, traced to the high level"];
+const RW=["","Weak","Partial","Good","Strong"];
+const KIND={i:"Issue",s:"Strength",m:"Partly right"};
+const D={
+"high-5":{sub:"5",lvl:"high",mark:4,file:"5 SysML Diagrams-Req. high level.pdf",as:"req [Fall Detection System Requirements]",
+title:"Submission 5, high level: a clean, problem-focused tree",
+verdict:"The strongest high-level diagram in the set. It states what the system must do without naming a single technology, uses correct containment and a consistent ID scheme, and covers most of the case study. It loses marks for compound requirements, an odd home for data protection and a few case needs left out.",
+pins:[
+["s","Proper diagram frame","The req frame with a named header tells the reader the diagram kind and its scope. Only three of the eight diagrams have a frame, and only this student writes the header in req [name] form."],
+["s","Containment drawn correctly","Every crosshair sits at the parent (container) end, which is the SysML rule. Submission 21 draws them at the child end."],
+["i","Root bundles three needs","S1 asks the system to activate an emergency response, communicate with professionals and keep patient information. Three needs in one statement can't be verified separately. A root works better as a short statement of purpose, with the needs left to its children."],
+["i","Data protection filed under operating constraints","Data (S1.4.1) is contained by Operation Constraints. Protecting medical records is a requirement area of its own (the case study singles it out for regulatory research), so it deserves its own branch under S1."],
+["i","Relatives' limits only half captured","The case says relatives must not alter records and must not read everything. S1.4.1 says relatives 'can access', so the read restriction is lost."],
+["i","Not verifiable as written","'Display the correct information when is required' gives a tester nothing to check. Name the users and the information, or split it into needs for each observed behaviour (non-usage, anxious usage, refused usage)."],
+["m","Compound, but refined later","S1.2 bundles three alarm triggers. That is acceptable at high level because the low-level diagram decomposes it into S1.2.1 to S1.2.4, which is exactly the refinement the brief asks for."]],
+crit:[[3,"Covers monitoring (location, movement, battery), the three automatic alarms, 24/7 indoor and outdoor operation, data protection and usability. Missing: false-alarm cancellation by the resident, an explicit manual alarm that bypasses automatic detection (only implied in S1.3), relatives in communication, and the observed behaviours beyond a vague mention."],
+[3,"One root, six children, a second level where needed, IDs that follow the tree (S1, S1.1 … S1.5). Loses ground for Data sitting under Operation Constraints and for compound statements in S1 and S1.2."],
+[4,"Every box is a capability the stakeholders would recognise; none is a component or an algorithm."],
+[4,"No technology is named. GDPR and the Data Protection Act 2018 appear as the source of a need, not as a design choice, which is the right way round."],
+[4,"Frame with req header, «requirement» stereotype, text and Id properties, containment crosshair at the parent end throughout. Only slips are grammar inside the text values."],
+[4,"Models the principal needs of the case study at the right height for a first diagram."]],
+lift:["Split S1 and S1.2 so each requirement states one verifiable need.","Give data protection its own branch, with children for role-based access (professionals update, relatives see a restricted view) and its regulatory source.","Add the missing case needs: manual alarm bypass, false-alarm designation and communication with relatives."]},
+
+"high-2":{sub:"2",lvl:"high",mark:1,file:"2 requirement diagram 1.pdf",as:"Unframed; root «requirement» Fall detection requirement (ID 1)",
+title:"Submission 2, diagram 1: a list of devices, not requirements",
+note:"This student labelled the files 'requirement diagram 1' and '2', not high and low level. Diagram 1 is marked here because it is the first tree; diagram 2 is marked in the low-level section.",
+verdict:"Uses the requirement box correctly, but almost nothing inside the boxes is a requirement. The tree jumps straight to hardware (GPS tracker, movement sensors, devices), the text reads as notes, and the links between boxes are unlabelled, so the reader can't tell how they relate.",
+pins:[
+["i","Root is not a requirement","'It is needed to identify requirement that can help to detect fall of elders' describes the analyst's task, not a system need. A root should say what the system must achieve, for example that it detects falls and calls for help automatically."],
+["i","Mixed notation","The containment crosshair also carries an open arrowhead. Containment is a plain solid line with the crosshair at the parent end; arrowheads belong to dependencies such as «deriveReqt»."],
+["i","Technology in the high level","'GPS tracker can be helpful for identifying fall outdoor' names a device and offers an opinion. The need is to know where the resident is outdoors; GPS is one way to meet it and belongs in the block diagrams."],
+["i","Unlabelled links and a clashing ID","Devices (id 2) is joined by plain dashed lines with no stereotype, so the relationship has no meaning. Its ID also clashes with the root of diagram 2."],
+["i","Stakeholders drawn as tape shapes","Resident, Relative and Doctor use a non-SysML shape and an unlabelled line. Stakeholders belong in the requirement text, a rationale note, or as actors in a use-case diagram."]],
+crit:[[1,"Only location and movement appear. Missing: inactivity and out-of-area alarms, manual alarm, false-alarm handling, data protection and access privileges, battery monitoring, 24/7 operation and the observed behaviours."],
+[1,"A one-level tree whose children are devices, plus an extra box hung off by unlabelled lines."],
+[1,"A meta-statement at the top and device choices below; neither sits at the level of a stakeholder need."],
+[1,"Every child names a technology: GPS tracker, communication devices, movement sensors, GPS tracking devices."],
+[2,"Uses «requirement» with id and text in a containment tree. Errors: no frame, arrowhead on containment, unlabelled dashed links, non-SysML stakeholder shapes, stray 'AB test' text, duplicate IDs."],
+[1,"Does not capture the principal needs of the case study."]],
+lift:["Rewrite each box as 'The system shall …' stating a need, and move device choices to the BDDs.","Replace unlabelled dashed lines with the relationship you mean («deriveReqt», «trace») or remove them.","List every need in the case study first, then check each has a box."]},
+
+"high-21":{sub:"21",lvl:"high",mark:2,file:"21 Part1(a)HighLevelRequirementDiagram.pdf",as:"Unframed tree, root «requirement» Fall Detection System",
+title:"Submission 21, high level: broad coverage, inverted notation",
+verdict:"Shows real engagement with the case (indoor and outdoor falls, the eight-hour rule, UK data protection with a source) but organises it under document headings and an adaptive-loop architecture rather than system needs. Every containment crosshair is drawn at the wrong end, and there are no IDs.",
+pins:[
+["i","No IDs, no frame","None of the ten requirements has an id, so nothing in the low-level diagram can trace back by ID. There is no req frame either."],
+["i","Crosshair at the child end","SysML puts the crosshair on the container (parent). Here it sits on the child on every link, which reads as each child containing the root."],
+["i","A heading, not a requirement","Project Drivers lists stakeholders and investment interest. That is project context; a requirements diagram holds things the system must do or be."],
+["m","Regulation named, but as a URL","Citing the UK Data Protection Act 2018 is good: it is the only regulatory requirement in the set besides submission 5. A web link inside the text is clutter. Put the source in a «trace» to a document or a rationale note, and say what the regulation requires of the system."],
+["i","Architecture imported into the problem","Functional splits into Monitoring, Analysis, Alarming and Working environments plus Master Data: the monitor, analyse, plan, execute loop of an adaptive system. That is a solution pattern. At high level the children should be needs such as 'detect falls', 'raise alarms', 'let residents call for help'."],
+["i","Implementation detail","'Match features to the Threshold values' fixes how detection works. The need is that falls are detected reliably; thresholds or machine learning is a design decision."],
+["s","Case needs captured","No movement for eight hours and sudden acceleration are both here, taken straight from the case."]],
+crit:[[2,"Covers automatic fall alarms, the eight-hour rule, sudden acceleration, indoor and outdoor operation, historical data and UK data protection. Missing: manual alarm, communication with carers and relatives, out-of-area alarm, false-alarm designation, battery monitoring, access privileges and the observed behaviours."],
+[1,"The top level is Functional, Non-Functional, Project Drivers and Project Constraints: headings from a requirements template, not requirements. The functional branch follows an architecture."],
+[2,"Mixes very broad statements ('able to execute adaptation') with mechanism ('collect features from sensors')."],
+[1,"Thresholds, feature matching and the adaptive-loop structure are design choices placed in the requirement model."],
+[1,"«requirement» boxes with text, but crosshairs reversed on every link, no ids, no frame, a URL in the text and a caption outside the diagram."],
+[2,"Some principal needs appear, but buried under categories and architecture."]],
+lift:["Redraw containment with the crosshair on the parent, add a req frame and give every box an id.","Delete the category boxes and hang the needs directly from the root.","Move thresholds, sensors and the adaptive loop to the BDDs; keep the needs they serve."]},
+
+"high-31":{sub:"31",lvl:"high",mark:2,file:"31 High_level.pdf",as:"Unframed; root «reuirement» Fall detection (GT0)",
+title:"Submission 31, high level: components named as requirements",
+verdict:"Containment is drawn correctly and several case needs are captured: eight-hour inactivity, sudden acceleration, battery levels, and contact with relatives and staff. But every requirement is named after a component, data protection is missing entirely, and one requirement is attached with «trace» instead of containment.",
+pins:[
+["i","Typo in the stereotype","«reuirement» should be «requirement». Stereotype names are part of the notation, so it counts."],
+["i","Inconsistent relationship","GPS Tracker is joined to the root by «trace» while its siblings use containment. «trace» is the weakest SysML link and says nothing about hierarchy; GT1 should be contained like GT2 to GT4."],
+["i","Misreads the case","The text raises an alert when 'the person is in garden'. The case asks for an alarm when the resident leaves the care home and garden area. The text also runs outside its box ('to ba…')."],
+["i","Solution-named requirements","Movement sensors, Intelligent software and Communication devices are parts of a design. At high level each box should name the need: detect inactivity, let staff check battery levels, let residents contact carers and relatives."],
+["s","Containment drawn correctly","Crosshairs sit at the parent end, unlike submission 21."]],
+crit:[[2,"Covers falls, eight-hour inactivity, sudden acceleration, an out-of-fence alert, battery levels and contact with family, doctors and nurses. Missing: data protection and access privileges (a stated case requirement), manual alarm, false-alarm designation, 24/7 indoor and outdoor operation, observed behaviours."],
+[2,"One root with four children, but one attached by «trace». IDs run GT0 to GT4 but are not hierarchical."],
+[2,"The texts are mostly at the right height ('raises alarm if no movement … in last 8 hours') but the names sit a level lower."],
+[1,"GPS Tracker, Movement sensors, Intelligent software and Communication devices are all components."],
+[2,"Correct containment and id/text properties. Errors: stereotype typo, no frame, «trace» in place of containment, underlined names (UML instance notation), text overflowing its box."],
+[2,"Principal needs partly captured, but leaving out data protection drops the case's regulatory theme."]],
+lift:["Rename each requirement after the need and move the components to the BDD.","Add a data protection branch derived from the UK Data Protection Act 2018, with role-based access.","Attach GT1 by containment and fix the garden condition."]},
+
+"low-5":{sub:"5",lvl:"low",mark:2.5,file:"5 SysML Diagrams-Req. low-level.pdf",as:"req [Automatically Emergency Response]",
+title:"Submission 5, low level: real refinement, clear traceability",
+verdict:"The only low-level diagram that clearly refines a named high-level requirement: the frame is S1.2 and the children are S1.2.1 to S1.2.4. It also uses the richest correct notation in the set. It falls short because the children add no precision, an architecture decision is modelled as a requirement and, against this brief, nothing is derived from the regulation.",
+pins:[
+["s","Frame names the parent requirement","Titling the frame after S1.2 tells the marker exactly which high-level requirement is being refined."],
+["s","IDs that trace","S1.2.1 to S1.2.4 continue the high-level numbering, so traceability is visible without drawing any extra lines."],
+["i","No added precision","'The system must detect falls' repeats the parent. Low-level requirements should be more specific: what counts as a fall, how quickly an alarm must be raised, what 'out of range' means."],
+["i","Verified by the wrong kind of element","verifiedBy points to an «interaction». In SysML, verification comes from a «testCase»; an interaction can be one, but only if it is stereotyped as a test case."],
+["m","Right direction, wrong spelling","The derive arrows correctly run from the derived requirement (D1) to its sources. The stereotype is written «deriveReq» instead of «deriveReqt»."],
+["i","A design decision dressed as a requirement","D1 requires the system to be composed of a wearable device, a smart gateway and a cloud service. That is an architecture choice. It belongs in the BDD as blocks that «satisfy» the four requirements. Modelling it as derived makes the architecture look like a consequence of the need."],
+["s","«satisfy» drawn correctly","The arrow runs from the Wearable Device System block to the requirement, the right way round, and the callout note restates the relationship in text."],
+["s","Rationale used well","A «rationale» note explains why the wearable design was chosen (privacy, indoor and outdoor coverage). That is where justification belongs."]],
+crit:[[2,"Refines one branch (S1.2) into four children. The other five high-level areas, data protection included, are not refined."],
+[3,"A clean one-to-four split of S1.2 using containment, with matching IDs."],
+[2,"The children sit at the same height as their parent; only 'more than 8 hours' adds any detail."],
+[1,"D1 commits to wearable, gateway and cloud. Geolocation Tracker and Big Data Analyzer as satisfying and verifying elements are fine, but D1 should not be a requirement."],
+[3,"Frame, containment, compartments (derived, verifiedBy, satisfiedBy, tracedBy), a callout, «satisfy» and «rationale». Errors: «deriveReq» spelling, verification by an interaction rather than a test case, one crosshair drawn as ⊗."],
+[2,"Five requirements (within 4–6) with strong traceability to S1.2, but none derived from regulation. The current brief requires the low level to come from regulatory provisions (Article 14 plus one other); the equivalent here was the UK Data Protection Act 2018 and medical ethics, and S1.4.1 Data was the natural branch to refine."]],
+lift:["Refine the regulatory branch: derive 4–6 requirements from specific provisions (access by role, relatives' restricted view, retention, security) and trace each to its provision.","Make each child more precise than its parent: time limits, definitions, who is involved.","Replace D1 with blocks in the BDD that «satisfy» the requirements, and verify with «testCase» elements."]},
+
+"low-2":{sub:"2",lvl:"low",mark:1,file:"2 requirement diagram 2.pdf",as:"Unframed; root «requirement» Communication requirement (ID 2)",
+title:"Submission 2, diagram 2: a sibling, not a refinement",
+note:"Marked as this student's low-level diagram because it is their second file. It does not refine diagram 1, which is the main reason for the mark.",
+verdict:"This diagram starts a second top-level requirement (ID 2) instead of refining anything in diagram 1, so the submission has no high-to-low traceability at all. It picks up two real case needs, manual alarms and contact with staff, but repeats every notation problem from diagram 1 and adds duplicate IDs and an unfinished requirement.",
+pins:[
+["i","Starts a new tree","ID 2 sits beside diagram 1's ID 1. A low-level diagram should open with a requirement from the high-level diagram and go deeper; this one goes sideways."],
+["i","Unfinished requirement","'Self alarm is needed to be activated while' stops mid-sentence, and the name is misspelt 'Alerm'."],
+["i","Duplicate ID and a mechanism","Emergency button reuses id 1.3, already taken by Movement sensors. A button is also a mechanism; the need is that the resident can raise an alarm by hand."],
+["m","A genuine case need","'Both manual and automatic alarm' reflects the case's requirement that residents can bypass automatic detection. But it also reuses id 2 and hangs from the tree by unlabelled lines."],
+["i","Leftover text","'AB test' appears under the text property here and in diagram 1. Remove drafting notes before submitting."]],
+crit:[[1,"Adds manual alarm and contact with staff. Nothing on data protection, false alarms, relatives or the other alarm types."],
+[1,"Not a refinement of diagram 1; within the tree, an extra box hangs off by unlabelled lines."],
+[1,"The same height as diagram 1, with device-level names."],
+[1,"'Communicating device' and 'Emergency button' are mechanisms."],
+[1,"No frame, arrowhead on containment, unlabelled dashed links, non-SysML stakeholder shapes, three duplicate IDs (2, 2 and 1.3)."],
+[1,"No regulation-derived requirements and no traceability to a high-level requirement."]],
+lift:["Open diagram 2 with a requirement copied from diagram 1 and refine it, keeping its ID prefix.","Derive the low-level requirements from the regulation the case points to (UK Data Protection Act 2018), linking each by containment or «deriveReqt».","Give every requirement a unique ID."]},
+
+"low-21":{sub:"21",lvl:"low",mark:2,file:"21 Part1(b)LowLevelRequirementDiagram.pdf",as:"Captioned '(Monitoring) Low level Requirement', no frame",
+title:"Submission 21, low level: traceable by name, hardware in the requirements",
+verdict:"Refines the Monitoring Environment requirement from the high-level diagram and tries the full set of SysML relationships: satisfy, derive, refine and verify. The satisfy and derive arrows point the right way. The rest goes wrong: containment is reversed again, a sensor list is written as a requirement, blood pressure enters a fall-detection system, and verify and refine are attached to the wrong kinds of element.",
+pins:[
+["m","Traceable, but the text changed","Monitoring Environment matches the high-level box by name, which gives traceability. Its text does not match ('monitoring client 24/7' here, 'collect features from sensors' there), and without IDs the link rests on the name alone."],
+["i","Crosshair at the child end again","The same error as the high-level diagram: the crosshair belongs on Monitoring Environment, the container."],
+["i","«refine» from a block","A design element that meets a requirement uses «satisfy». «refine» is for elaborating a requirement, for example with a use case or an activity."],
+["i","«verify» from an enumeration","Verification must come from a test case. High/Low/Normal is an enumeration (a value type), not a «block» and not a test."],
+["i","Hardware in a requirement, and out of scope","'The system shall use Accelerometer, Gyroscope and Sphygmomanometer' is a design choice. Blood pressure is not part of fall detection in this case study."],
+["s","«satisfy» and derive point the right way","Blocks satisfy the requirement (arrow from block to requirement) and Sensor Data is derived from its two sources. The stereotype is misspelt «derivedReq», and the blocks are drawn with dashed borders and a 'text' property they don't have."],
+["i","Not measurable","'Detecting any digression in data' gives no definition of a digression. Low-level requirements need conditions a tester can check."]],
+crit:[[1,"Only the monitoring branch, three new requirements, and nothing on alarms, communication or data protection."],
+[2,"Two contained children plus one derived requirement: below the 4–6 the brief asks for."],
+[2,"'Monitor 24/7' and 'detect any digression' are no more precise than the high level."],
+[1,"The Sensor Data requirement names three instruments."],
+[2,"Correct «satisfy» and derive directions. Wrong containment end, misused «verify» and «refine», a misspelt stereotype, dashed-border blocks, a free-floating note, no frame."],
+[2,"Traceable by name to a high-level requirement, but no requirement comes from regulation and fewer than four are added."]],
+lift:["Write 4–6 regulation-derived requirements with IDs that continue the high-level numbering.","Move the sensors to the BDD as blocks satisfying a need-level requirement; drop blood pressure unless the case asks for it.","Use «testCase» for verification and «satisfy» for design elements."]},
+
+"low-31":{sub:"31",lvl:"low",mark:1.5,file:"31 Low level.pdf",as:"Frame 'LowLevel Req', split over two PDF pages",
+title:"Submission 31, low level: six requirements with no route back",
+verdict:"Has a frame, correct containment ends and six requirements, the right number for the current brief. But nothing ties it to the high-level diagram (new IDs, new root text), communication is filed under threshold detection, a wearable device is written as a requirement, and notes are used as the ends of relationships.",
+pins:[
+["i","Frame header incomplete, diagram split","A frame header should read req [name]. This one says 'LowLevel Req', and the frame starts on a blank first page in the PDF, so the diagram arrives in two pieces."],
+["i","No link to the high level","The root is FD1, 'Fall Detection'. The high-level root was GT0, 'Fall detection', with different text. No ID, frame title or relationship connects them, so the refinement can't be traced."],
+["s","Containment correct","Crosshairs sit on the parent, Fall Detection."],
+["i","Implementation as a requirement","'The system will use a wearable device' is a design decision, and its ID '62j3.' breaks the scheme used elsewhere."],
+["i","Rationale given an arrow","A «rationale» note attaches with a plain dashed line to the element it explains. Here it carries a deriveReqt arrow, as if the rationale were a requirement."],
+["i","Communication under threshold detection","C1 is contained by Threshold-based, so contacting carers becomes part of the detection method. It belongs under a communication branch traced to GT4."],
+["i","Callout used as a relationship","satisfiedBy is a callout label, not a stereotype for an arrow. Draw a Wearable Device «block» with a «satisfy» arrow to the requirement. The «trace» from the GPS note has the same problem: a note can't own a relationship."]],
+crit:[[1,"Fall detection, movement, location, thresholds and communication. No alarms, no data protection, no manual or false-alarm handling."],
+[1,"Communication is contained by threshold detection, and the wearable device is derived from movement monitoring."],
+[2,"'Detect the fall when monitored data values exceed predefined threshold values' is precise, the kind of detail a low level should add, though it also fixes the method."],
+[1,"Wearable device, GPS and threshold detection are design choices."],
+[2,"Frame, correct containment, deriveReqt from Wearable Device in the right direction. Errors: incomplete frame header, rationale with an arrow, a note as trace source, satisfiedBy as a relationship (spelt 'satifiedby'), 'will' and 'shall' mixed, diagram split over pages."],
+[1,"Six requirements, but none regulation-derived and none traceable to the high level."]],
+lift:["Start from GT0 (or one of its children) and carry its ID into the new requirements.","Derive the requirements from the regulation and trace each to its provision.","Replace notes-with-arrows by «block» elements with «satisfy», and anchor rationale notes with a plain line."]}
+};
+const ORDER=["overview","high-5","high-2","high-21","high-31","low-5","low-2","low-21","low-31","conclusions"];
+const SUBS=["5","2","21","31"];
+const NAMES={overview:"Overview",conclusions:"Conclusions"};
+ORDER.forEach(k=>{if(D[k])NAMES[k]=(D[k].lvl=="high"?"High level, submission ":"Low level, submission ")+D[k].sub});
+const band=p=>p>=70?"First":p>=60?"Upper second":p>=50?"Lower second":p>=40?"Third":"Fail";
+const fmt=n=>(Math.round(n*10)/10).toString();
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const nav=document.getElementById("nav"),view=document.getElementById("view");
+nav.innerHTML=`<a href="#overview" data-k="overview">Overview</a>
+<div class="grp"><span>High level</span>${SUBS.map(s=>`<a href="#high-${s}" data-k="high-${s}" aria-label="High level, submission ${s}">${s}</a>`).join("")}</div>
+<div class="grp"><span>Low level</span>${SUBS.map(s=>`<a href="#low-${s}" data-k="low-${s}" aria-label="Low level, submission ${s}">${s}</a>`).join("")}</div>
+<a href="#conclusions" data-k="conclusions">Conclusions</a>`;
+const meter=r=>`<div class="meter" aria-hidden="true">${[1,2,3,4].map(n=>`<i class="${n<=r?"f":""}"></i>`).join("")}</div><span class="rate">${RW[r]}</span>`;
+const pager=k=>{const i=ORDER.indexOf(k),p=ORDER[i-1],n=ORDER[i+1];return `<nav class="pager" aria-label="Previous and next">${p?`<a href="#${p}"><small>Previous</small>${NAMES[p]}</a>`:""}${n?`<a class="nx" href="#${n}"><small>Next</small>${NAMES[n]}</a>`:""}</nav>`};
+const paper=(k,big)=>{const im=IMG[k],d=D[k];return `<div class="paper"${big?` style="width:${im.w}px"`:""}><img src="${im.f}" width="${im.w}" height="${im.h}" alt="Submission ${d.sub} ${d.lvl}-level requirements diagram: ${esc(d.as)}">${im.p.map((p,i)=>`<button type="button" class="pin ${d.pins[i][0]}" data-n="${i}" style="left:${p[0]}%;top:${p[1]}%" aria-label="Note ${i+1}: ${esc(d.pins[i][1])}">${i+1}</button>`).join("")}</div>`};
+function diagram(k){
+const d=D[k],crit=d.lvl=="high"?CRIT_H:CRIT_L,pct=d.mark/5*100;
+const counts={i:0,s:0,m:0};d.pins.forEach(p=>counts[p[0]]++);
+return `<div class="head"><div><h1>${d.title}</h1><p class="lede">${d.verdict}</p><p class="sub">File: ${esc(d.file)}. Diagram: ${esc(d.as)}.</p></div>
+<div class="slab"><b>${fmt(d.mark)} / 5</b><small>${Math.round(pct)}% of this diagram's share of Part 1.2</small></div></div>
+${d.note?`<p class="callout">${d.note}</p>`:""}
+<section class="work"><div><div class="figbar"><label for="tg"><input type="checkbox" id="tg" checked> Show marker's pins</label><span>${counts.i} issues, ${counts.s} strengths${counts.m?`, ${counts.m} partly right`:""}</span><button type="button" id="big">Enlarge diagram</button></div><div id="fig">${paper(k)}</div></div>
+<div class="notes" id="notes">${d.pins.map((p,i)=>`<div class="note" id="n${i}"><button type="button" class="pin ${p[0]}" data-n="${i}" aria-label="Highlight note ${i+1}">${i+1}</button><div><span class="kind ${p[0]}">${KIND[p[0]]}</span><h3>${p[1]}</h3><p>${p[2]}</p></div></div>`).join("")}</div></section>
+<h2>Against the Part 1.2 criteria</h2>
+<div class="scroll"><table class="stack"><thead><tr><th>Criterion</th><th>Rating</th><th>Why</th></tr></thead><tbody>${crit.map((c,i)=>`<tr><td data-l="Criterion"><b>${c}</b></td><td data-l="Rating">${meter(d.crit[i][0])}</td><td data-l="Why">${d.crit[i][1]}</td></tr>`).join("")}</tbody></table></div>
+<h2>What would lift the mark</h2><ol class="lift">${d.lift.map(x=>`<li>${x}</li>`).join("")}</ol>${pager(k)}`}
+const COV=[["Automatic fall detection",[2,1,2,2]],["Alarm after 8 hours without movement",[2,0,2,2]],["Alarm when leaving the home and garden",[2,1,0,1]],["Manual alarm that bypasses detection",[1,2,0,0]],["Resident can mark an alarm as false",[0,0,0,0]],["Contact with carers, nurses and relatives",[1,1,0,2]],["Staff can check device batteries",[2,0,0,2]],["Works 24/7, indoors and outdoors",[2,1,2,1]],["Medical data protected, access by role (UK DPA 2018)",[1,0,1,0]],["Copes with observed behaviours (non-usage, anxious use…)",[1,0,0,0]],["Room for a future intelligent agent",[0,0,1,0]]];
+function overview(){
+const rows=SUBS.map(s=>{const h=D["high-"+s].mark,l=D["low-"+s].mark,t=h+l;return {s,h,l,t,p:t*10}}).sort((a,b)=>b.t-a.t);
+const covTot=SUBS.map((s,j)=>COV.reduce((a,r)=>a+r[1][j]/2,0));
+const sym=v=>`<span class="dot d${v}" role="img" aria-label="${["missing","partly covered","covered"][v]}"></span>`;
+return `<div class="head"><div><h1>Only submission 5 refines properly. The other three lose most marks on abstraction and notation.</h1>
+<p class="lede">Four students' high-level and low-level SysML requirements diagrams for the Fall Detection case study (CASE STUDY 1), marked against the Part 1.2 criteria of the 2026/27 System Analysis and Design brief.</p></div>
+<div class="slab"><b>${fmt(rows[0].t)} / 10</b><small>Best pair: submission ${rows[0].s} (${rows[0].p}%)</small></div></div>
+<h2 style="margin-top:8px">Marks for each pair, out of 10</h2>
+<div class="bandlab" aria-hidden="true"><div></div><div>${[40,50,60,70].map(b=>`<span class="${b==50||b==60?"mid":""}" style="left:${b}%">${b}%</span>`).join("")}</div><div></div></div>
+<div class="bars">${rows.map(r=>`<div class="brow"><a href="#high-${r.s}">Submission ${r.s}</a><div class="track" role="img" aria-label="High level ${fmt(r.h)}, low level ${fmt(r.l)}, total ${fmt(r.t)} out of 10">${[40,50,60,70].map(b=>`<i class="tick" style="left:${b}%"></i>`).join("")}<i class="seg h" style="left:0;width:${r.h*10}%"></i><i class="seg l" style="left:${r.h*10}%;width:${r.l*10}%"></i></div><div class="bval">${fmt(r.t)} / 10<small>${band(r.p)}</small></div></div>`).join("")}</div>
+<div class="key"><span><i style="background:var(--ink)"></i>High-level diagram (out of 5)</span><span><i style="background:var(--slate);opacity:.55"></i>Low-level diagram (out of 5)</span><span>Dashed lines: 40% pass, 50%, 60%, 70% first-class</span></div>
+<div class="scroll" style="margin-top:22px"><table class="stack"><thead><tr><th>Submission</th><th class="num">High level</th><th class="num">Low level</th><th class="num">Pair</th><th>Band</th><th>In one line</th></tr></thead><tbody>
+${rows.map(r=>`<tr><td data-l="Submission"><b>${r.s}</b></td><td class="num" data-l="High level"><a href="#high-${r.s}">${fmt(r.h)} / 5</a></td><td class="num" data-l="Low level"><a href="#low-${r.s}">${fmt(r.l)} / 5</a></td><td class="num" data-l="Pair">${fmt(r.t)} / 10 (${r.p}%)</td><td data-l="Band">${band(r.p)}</td><td data-l="In one line">${{"5":"Problem-focused high level; genuine refinement of S1.2, but no regulatory requirements and one design decision posing as a requirement.","21":"Good coverage, but category headings, an architecture in the requirements and every crosshair reversed.","31":"Components named as requirements; low level has no link back to the high level.","2":"Devices and notes rather than requirements; the second diagram is a sibling tree, not a refinement."}[r.s]}</td></tr>`).join("")}</tbody></table></div>
+<h2>How much of the case each pair covers</h2>
+<p class="lede" style="margin-bottom:14px">Completeness is the first Part 1.2 criterion. These are the needs CASE STUDY 1 states, checked across both diagrams of each pair.</p>
+<div class="scroll"><table class="cov"><thead><tr><th>Need stated in the case study</th>${SUBS.map(s=>`<th class="c">${s}</th>`).join("")}</tr></thead><tbody>
+${COV.map(r=>`<tr><td>${r[0]}</td>${r[1].map(v=>`<td class="c">${sym(v)}</td>`).join("")}</tr>`).join("")}
+<tr><td><b>Needs covered (half for partial)</b></td>${covTot.map(t=>`<td class="c" style="font-size:15px"><b>${fmt(t)}</b>/${COV.length}</td>`).join("")}</tr></tbody></table></div>
+<p class="key"><span>${sym(2)} &nbsp;Covered</span><span>${sym(1)} &nbsp;Partly covered</span><span>${sym(0)} &nbsp;Missing</span></p>
+<h2>How these were marked</h2>
+<div class="cols"><div>
+<div class="pt"><h3>Marks</h3><p>Part 1.2 is worth 10 marks for the pair, so each diagram is marked out of 5, with half marks. The brief says its characteristics are not separately weighted, so each mark is a holistic judgement informed by the ratings.</p></div>
+<div class="pt"><h3>Criteria</h3><p>The five Part 1.2 characteristics (completeness as regards the scenario, decomposition, level of abstraction, separation of problem from implementation, correct SysML notation) plus the brief's own description of each diagram: principal needs without unnecessary technology for the high level; 4–6 regulation-derived requirements traced to the high level for the low level.</p></div>
+<div class="pt"><h3>Regulation</h3><p>These diagrams answer CASE STUDY 1, not the AI patient-monitoring case, so completeness is judged against the Fall Detection scenario. The low-level rule (requirements from Article 14 and one other EU AI Act article) is applied through the regulation CASE STUDY 1 points students to: the UK Data Protection Act 2018 and ethics rules for medical information.</p></div>
+</div><div>
+<div class="pt"><h3>Rating scale for each criterion</h3><p>Strong: no real weakness. Good: sound, minor gaps. Partial: some of it is there, with clear problems. Weak: largely missing or wrong.</p></div>
+<div class="pt"><h3>Mark scale for each diagram</h3><p>5 exemplary; 4 strong with minor slips; 3 sound but with clear gaps; 2 weak, with major problems of abstraction or notation; 1 minimal, barely a requirements diagram; 0 missing.</p></div>
+<div class="pt"><h3>Bands</h3><p>Pair percentages use the usual UK bands: 70% and above first, 60–69 upper second, 50–59 lower second, 40–49 third, below 40 fail. The brief adds that BU's Level 5 generic criteria inform the overall standard; this is a practice marking, not an official one.</p></div>
+</div></div>${pager("overview")}`}
+function conclusions(){
+const H=[["States needs, not parts","Requirement names are outcomes ('Detect falls'), never components ('GPS Tracker'). The brief asks for no unnecessary technological decisions.","Seen: submission 5 throughout. Missed: submissions 2 and 31, and the functional branch of 21."],
+["Covers the whole case at one height","List every stakeholder need in the case study before drawing, then check each has a box. Completeness is the first criterion.","Seen: submission 5 covers 7 of 11 needs. Missed: submission 2 covers 3."],
+["One verifiable need per box","If a box contains 'and', think about splitting it. A tester should be able to say pass or fail.","Missed: the roots of submissions 5 and 21 bundle several needs."],
+["A shallow tree with a real root","One root stating the system's purpose, five to eight children, a second level only where a child is genuinely broad. No category boxes.","Missed: 'Functional', 'Non-Functional' and 'Project Drivers' in submission 21."],
+["IDs that carry into the low level","Hierarchical IDs (1, 1.1, 1.1.1) let the low-level diagram trace back without extra lines.","Seen: submission 5. Missed: no IDs in 21; GT IDs abandoned for FD/MM/JJ in 31."],
+["Plain, correct notation","A req frame with a header, «requirement» with id and text, containment with the crosshair on the parent. Nothing else is needed at this level.","Missed: reversed crosshairs (21), arrowheads on containment (2), «trace» as a parent link (31)."]];
+const L=[["Opens with a high-level requirement","The frame title or the top box is a requirement taken from the high level, with its ID, and the new requirements continue that ID.","Seen: submission 5's req [Automatically Emergency Response]. Missed: 2 and 31 start new trees."],
+["Comes from a named source","Under the current brief: 4–6 requirements derived from Article 14 and one of Articles 10, 12 or 15, at least one from each, each traced to its provision (a «requirement» for the provision with «deriveReqt», or «trace» to the regulation).","Missed: none of the four derived its low level from its case's regulation."],
+["Adds precision","Each child says more than its parent: who, when, how quickly, what counts.","Missed: 'Detect falls' under 'detect falls' (5). Seen: the threshold condition in 31, though it also fixes the method."],
+["Keeps design out, and links to it","Components, sensors and architectures appear as «block» elements that «satisfy» a requirement, never as requirements themselves.","Missed: D1 in 5, Sensor Data in 21, Wearable Device in 31."],
+["Uses each relationship for its job","Containment to decompose, «deriveReqt» for derived needs, «satisfy» from design, «verify» from test cases, «rationale» notes on a plain line.","Seen: «satisfy» and «rationale» in 5. Missed: «verify» from an interaction (5) and an enumeration (21), notes with arrows (31)."],
+["Stays within 4–6 and stays on scope","Enough requirements to show the regulation shaping the system, not a second high-level diagram.","Missed: three new requirements in 21, including blood pressure, which the case never mentions."]];
+const MIS=[["Crosshair at the child end","21 (both diagrams)","Put the ⊕ on the container"],
+["A component or device written as a requirement","2, 31 high; 5, 21, 31 low","State the need; model the part as a «block» that «satisfies» it"],
+["Template headings as requirements","21 high","Hang needs directly from the root"],
+["Low level not linked to the high level","2, 31","Open with the parent requirement and continue its IDs"],
+["No regulation-derived requirements in the low level","All four","Derive 4–6 from named provisions and trace to them"],
+["Verification by something other than a test case","5 (interaction), 21 (enumeration)","«verify» from a «testCase»"],
+["Misspelt stereotypes","5 «deriveReq», 21 «derivedReq», 31 «reuirement», «satifiedby»","«deriveReqt», «requirement», «satisfy»"],
+["Unlabelled lines, or notes used as relationship ends","2, 31","Every line carries a stereotype; notes attach with a plain dashed line"],
+["No frame or no IDs","2, 21, 31 high","req [name] frame; unique hierarchical IDs"],
+["Unfinished or untestable text","2 'activated while', 5 'when is required', 21 'any digression'","'The system shall …' with a condition a tester can check"]];
+const REL=[["Containment","Solid line, ⊕ at the parent end","From parent to child","Breaking a requirement into parts"],
+["«deriveReqt»","Dashed line, open arrowhead","From the derived requirement to its source","A requirement that follows from another, such as from a regulation clause"],
+["«satisfy»","Dashed line, open arrowhead","From the block (design) to the requirement","Showing which design element meets a requirement"],
+["«verify»","Dashed line, open arrowhead","From the test case to the requirement","Showing how a requirement will be checked"],
+["«refine»","Dashed line, open arrowhead","From the refining element (often a use case or activity) to the requirement","Elaborating a requirement with a model"],
+["«trace»","Dashed line, open arrowhead","Between any two elements","A loose link, such as to a source document; the weakest relationship"],
+["«rationale»","Note on a plain dashed anchor","Attached to an element or relationship","Explaining why"],
+["Compartments and callouts","Text inside the box (derived, satisfiedBy, verifiedBy) or in a note","None","Showing a relationship without drawing the line"]];
+const pts=a=>a.map(x=>`<div class="pt"><h3>${x[0]}</h3><p>${x[1]}</p><p class="ev">${x[2]}</p></div>`).join("");
+const box=(x,y,w,st,nm,cls)=>`<rect class="${cls||"bx"}" x="${x}" y="${y}" width="${w}" height="54" rx="2"/><text class="st${cls=="bx hl"?" hl":""}" x="${x+12}" y="${y+21}">${st}</text><text class="nm${cls=="bx hl"?" hl":""}" x="${x+12}" y="${y+42}">${nm}</text>`;
+const cross=(x,y)=>`<circle class="ln" cx="${x}" cy="${y}" r="7" style="fill:var(--bg)"/><path class="ln" d="M${x-7} ${y}h14M${x} ${y-7}v14"/>`;
+const ch=["1.1 Detect falls and inactivity","1.2 Let residents raise or cancel alarms","1.3 Protect medical data by role","1.4 Work 24/7, indoors and outdoors","1.5 Keep carers and relatives informed"];
+const left=`<svg viewBox="0 0 560 410" role="img" aria-label="A good high-level pattern: one root requirement containing five need-level requirements"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="1.5"/></marker></defs>
+${box(20,14,300,"«requirement» id 1","Fall detection system")}
+<path class="ln" d="M60 75V${96+4*62+27}"/>${ch.map((c,i)=>`<path class="ln" d="M60 ${96+i*62+27}H100"/>${box(100,96+i*62,440,"«requirement»",c)}`).join("")}${cross(60,75)}</svg>`;
+const kids=["1.3.1 Access by role","1.3.2 Relatives' view","1.3.3 Access is logged"];
+const right=`<svg viewBox="0 0 560 410" role="img" aria-label="A good low-level pattern: requirement 1.3 from the high level contains three refined requirements; one is derived from a regulatory provision, one is satisfied by a block, one is verified by a test case and explained by a rationale note">
+${box(20,14,250,"«requirement» from high level","1.3 Protect medical data","bx hl")}
+${box(310,14,230,"«requirement»","Regulatory provision")}
+<path class="ln" d="M60 75V${110+2*80+27}"/>${kids.map((c,i)=>`<path class="ln" d="M60 ${110+i*80+27}H100"/>${box(100,110+i*80,210,"«requirement»",c)}`).join("")}${cross(60,75)}
+<path class="dl" d="M310 137H425V70" marker-end="url(#ah)"/><text class="lb" x="433" y="104">«deriveReqt»</text>
+${box(390,190,150,"«block»","Access control","bk")}<path class="dl" d="M390 217H312" marker-end="url(#ah)"/><text class="lb" x="350" y="208" text-anchor="middle">«satisfy»</text>
+${box(390,270,150,"«testCase»","Audit log test","bk")}<path class="dl" d="M390 297H312" marker-end="url(#ah)"/><text class="lb" x="350" y="288" text-anchor="middle">«verify»</text>
+<path d="M100 350h192l18 18v36H100z" class="bx"/><path class="ln" d="M292 350v18h18"/><text class="st" x="112" y="371">«rationale»</text><text x="112" y="393" style="font-size:14px">Shows who saw what</text>
+<path class="dl" d="M205 350V324"/></svg>`;
+return `<div class="head"><div><h1>A good high level says what the system must achieve. A good low level shows where each detail came from.</h1>
+<p class="lede">What separated the marks across the eight diagrams, and what that means for your own Part 1.2 diagrams on the AI patient-monitoring case.</p></div>
+<div class="slab"><b>1 of 4</b><small>pairs refined a named high-level requirement with traceable IDs</small></div></div>
+<section class="schem"><figure><div class="scroll">${left}</div><figcaption><b>High level.</b> One root, needs one level down, each a single verifiable outcome; containment with the crosshair on the parent; no components anywhere.</figcaption></figure>
+<figure><div class="scroll">${right}</div><figcaption><b>Low level.</b> Opens with a requirement copied from the high level, adds precise children, traces each to the provision it comes from, and links design and tests with «satisfy» and «verify» instead of writing them as requirements. Example drawn from the Fall Detection case.</figcaption></figure></section>
+<div class="cols" style="margin-top:12px"><div><h2>What makes a good high-level diagram</h2>${pts(H)}</div><div><h2>What makes a good low-level diagram</h2>${pts(L)}</div></div>
+<h2>Mistakes that cost the most marks</h2>
+<div class="scroll"><table class="stack"><thead><tr><th>Mistake</th><th>Seen in</th><th>Fix</th></tr></thead><tbody>${MIS.map(m=>`<tr><td data-l="Mistake"><b>${m[0]}</b></td><td data-l="Seen in">${m[1]}</td><td data-l="Fix">${m[2]}</td></tr>`).join("")}</tbody></table></div>
+<h2>Requirement-diagram relationships at a glance</h2>
+<div class="scroll"><table class="stack"><thead><tr><th>Relationship</th><th>Drawn as</th><th>Direction</th><th>Use it for</th></tr></thead><tbody>${REL.map(m=>`<tr><td data-l="Relationship"><b>${m[0]}</b></td><td data-l="Drawn as">${m[1]}</td><td data-l="Direction">${m[2]}</td><td data-l="Use it for">${m[3]}</td></tr>`).join("")}</tbody></table></div>
+<h2>Checking your own diagrams against the brief</h2>
+<div class="cols"><div>
+<div class="pt"><h3>High level</h3><p>List every need the AI patient-monitoring case states (the information sources, the AI output with supporting information and uncertainty, professional review and the resulting action, recording for traceability, decision support rather than autonomous decisions) and check each has a box. Name outcomes, not technologies.</p></div>
+<div class="pt"><h3>Notation</h3><p>req frame and header, «requirement» with id and text, crosshair on the parent, every dependency stereotyped and pointing the right way.</p></div>
+</div><div>
+<div class="pt"><h3>Low level</h3><p>4–6 requirements, at least one from Article 14 and one from your chosen article. Open with the high-level requirement each refines, continue its IDs, and trace each to the specific provision it comes from.</p></div>
+<div class="pt"><h3>Design stays in Part 2</h3><p>If a requirement names a component, model, algorithm or vendor, move that into the BDDs and link back with «satisfy».</p></div>
+</div></div>${pager("conclusions")}`}
+let cur=null;
+function show(){
+let k=location.hash.slice(1);if(!ORDER.includes(k))k="overview";
+nav.querySelectorAll("a").forEach(a=>{if(a.dataset.k==k)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+view.innerHTML=k=="overview"?overview():k=="conclusions"?conclusions():diagram(k);
+document.title=(k=="overview"?"Requirements Diagram Marking":NAMES[k]);
+if(cur!==null)window.scrollTo(0,0);
+cur=k;
+if(D[k])bind(k);
+}
+function hl(n){
+view.querySelectorAll(".pin").forEach(p=>p.classList.toggle("on",p.dataset.n==n));
+view.querySelectorAll(".note").forEach((x,i)=>x.classList.toggle("on",i==n));
+const note=document.getElementById("n"+n);
+if(note){const box=document.getElementById("notes");if(getComputedStyle(box).position=="sticky"){box.scrollTo({top:note.offsetTop-box.offsetTop-8,behavior:"smooth"})}}
+}
+function bind(k){
+const fig=document.getElementById("fig");
+document.getElementById("tg").addEventListener("change",e=>fig.classList.toggle("nopins",!e.target.checked));
+view.querySelectorAll("#fig .pin").forEach(p=>p.addEventListener("click",()=>{hl(p.dataset.n);if(getComputedStyle(document.getElementById("notes")).position!="sticky")document.getElementById("n"+p.dataset.n).scrollIntoView({behavior:"smooth",block:"center"})}));
+view.querySelectorAll(".note .pin").forEach(p=>p.addEventListener("click",()=>{hl(p.dataset.n);fig.scrollIntoView({behavior:"smooth",block:"nearest"})}));
+view.querySelectorAll(".note").forEach((x,i)=>x.addEventListener("mouseenter",()=>hl(i)));
+document.getElementById("big").addEventListener("click",()=>openBig(k,fig.classList.contains("nopins")));
+}
+const ovl=document.getElementById("ovl"),ovlA=document.getElementById("ovlA");
+function openBig(k,nopins){
+const d=D[k];document.getElementById("ovlT").textContent=NAMES[k];
+ovlA.innerHTML=`<div class="${nopins?"nopins":""}">${paper(k,true)}</div>`;
+ovlA.querySelectorAll(".pin").forEach(p=>p.addEventListener("click",()=>{closeBig();hl(p.dataset.n)}));
+ovl.classList.add("open");document.getElementById("ovlX").focus();
+}
+function closeBig(){ovl.classList.remove("open");ovlA.innerHTML="";const b=document.getElementById("big");if(b)b.focus()}
+document.getElementById("ovlX").addEventListener("click",closeBig);
+document.addEventListener("keydown",e=>{if(e.key=="Escape"&&ovl.classList.contains("open"))closeBig()});
+window.addEventListener("hashchange",show);
+show();
+}
+</script>
+</body>
+</html>
